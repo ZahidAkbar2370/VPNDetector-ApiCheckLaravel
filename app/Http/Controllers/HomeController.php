@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Country;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -15,18 +16,23 @@ class HomeController extends Controller
 
 
         $blockedCountries = Country::where("status", "blocked")->get();
+        $setting = Setting::first();
 
-        if (in_array($details->country, $blockedCountries))
-        {
-            return view("welcome");
+        if(!empty($blockedCountries)){
+            foreach($blockedCountries as $blockCountry){
+                if (in_array($details->country, [$blockCountry->country_code]))
+                {
+                    echo $blockCountry->country_name. " Blocked"; exit;
+                }
+            }
         }
 
         $proxyResponse = Http::get("https://ipqualityscore.com/api/json/ip/VoDWVvnwtJmSBUnekP0ZfKW6IhUMW1P3/".$details->ip."?strictness=2&fast=1");
 
         if(json_decode($proxyResponse)->proxy == false){
-            return view("welcome");
+            return view($setting->advertisement_url);
         }
 
-        return redirect("https://google.com");
+        return redirect($setting->website_url);
     }
 }
